@@ -6,9 +6,9 @@ const router = express.Router()
 
 // Configure Cloudinary (env vars preferred; fallbacks kept for parity with current setup)
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dddiaaofj',
-  api_key: process.env.CLOUDINARY_API_KEY || '868597764483733',
-  api_secret: process.env.CLOUDINARY_API_SECRET || 'dT-9mngHlwVBIIiLUvAEAvKK9X0'
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME ,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 })
 
 // Multer in-memory storage
