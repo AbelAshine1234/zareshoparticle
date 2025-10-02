@@ -1,0 +1,99 @@
+#root {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 1rem;
+  text-align: center;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, sans-serif;
+  color: #1a1a1a;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+/* Layout helpers */
+.row { display: flex; gap: .5rem; align-items: center; }
+.between { display: flex; justify-content: space-between; align-items: center; }
+.col { display: grid; gap: .5rem; }
+
+/* Typography */
+h1 { font-size: 1.25rem; }
+h2 { font-size: 1.1rem; margin: .25rem 0 .5rem; }
+h3 { font-size: 1rem; margin: .25rem 0 .5rem; }
+p { margin: .25rem 0; line-height: 1.5; }
+small { color: #6b7280; }
+
+/* Lists */
+ul { margin: .25rem 0; padding-left: 1rem; }
+li { margin: .25rem 0; }
+
+/* Controls */
+button {
+  font-size: .9rem;
+  padding: .35rem .6rem;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f3f4f6;
+  color: #111827;
+  cursor: pointer;
+}
+button:hover { background: #e5e7eb; }
+button:disabled { opacity: .6; cursor: not-allowed; }
+
+.btn-primary { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+.btn-primary:hover { background: #27672a; }
+.btn-danger { background: #d32f2f; color: #fff; border-color: #d32f2f; }
+.btn-danger:hover { background: #b71c1c; }
+
+input, select, textarea {
+  width: 100%;
+  padding: .5rem .6rem;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+textarea { resize: vertical; }
+
+/* Header */
+header { border-radius: 10px; }
+nav a { text-decoration: none; }
+
+/* Utilities */
+.muted { color: #6b7280; }
+.chip { display: inline-block; padding: .1rem .4rem; border: 1px solid #e5e7eb; border-radius: 9999px; font-size: .75rem; }
+
+.read-the-docs {
+  color: #888;
+}
