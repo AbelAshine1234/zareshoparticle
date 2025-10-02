@@ -36,7 +36,9 @@ The client proxies `/api` to `http://localhost:4000`.
 - DELETE `/api/articles/:id` → delete article (admin only, requires `Authorization: Bearer <token>`)
 - POST `/api/upload` → upload image to Cloudinary (multipart/form-data with 'image' field)
 - GET `/api/articles/:id/comments` → get comments for article
-- POST `/api/articles/:id/comments` `{ content }` → post comment (requires `Authorization: Bearer <token>`)
+- POST `/api/articles/:id/comments` `{ content, name? }` → post comment
+  - If `Authorization: Bearer <token>` is provided, the comment is attributed to the signed-in user.
+  - If no auth header is provided, the comment is posted as a guest, using optional `name` or defaulting to `"Guest"`.
 - DELETE `/api/comments/:id` → delete comment (admin only, requires `Authorization: Bearer <token>`)
 
 ### Auth
@@ -59,9 +61,10 @@ Client routes:
 - Preview during article creation
 
 ### Comments System
-- Users can post comments on articles (requires authentication)
-- Comments show author name and timestamp
-- Admins can delete any comment
+- Signed-in users and guests can post comments on articles.
+- Guests can optionally provide a name; otherwise they appear as "Guest".
+- Comments show author name and timestamp.
+- Admins can delete any comment.
 
 ### Admin Features
 - Delete articles (admin only)

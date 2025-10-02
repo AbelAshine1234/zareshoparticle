@@ -117,6 +117,7 @@ function ArticleView() {
   const [error, setError] = useState('')
   const [commentContent, setCommentContent] = useState('')
   const [guestName, setGuestName] = useState('')
+  const [postingComment, setPostingComment] = useState(false)
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const auth = useSelector(s => s.auth)
@@ -150,11 +151,14 @@ function ArticleView() {
     e.preventDefault()
     if (!commentContent.trim()) return
     try {
+      setPostingComment(true)
       await dispatch(postComment({ articleId: id, content: commentContent, name: auth.user ? undefined : guestName || 'Guest' })).unwrap()
       setCommentContent('')
       setGuestName('')
     } catch (err) {
       setError(err.message || 'Failed to post comment')
+    } finally {
+      setPostingComment(false)
     }
   }
 
@@ -221,6 +225,9 @@ function ArticleView() {
                       style={{ width: '100%', padding: 8 }}
                     />
                   </label>
+                  <div className="muted" style={{ fontSize: '12px', color: '#666', marginTop: 4 }}>
+                    If left empty, your comment will appear as <strong>Guest</strong>.
+                  </div>
                 </div>
               )}
               <textarea
@@ -236,8 +243,8 @@ function ArticleView() {
                   resize: 'vertical'
                 }}
               />
-              <button type="submit" className="btn-primary" style={{ marginTop: 8 }}>
-                Post Comment
+              <button type="submit" className="btn-primary" disabled={postingComment || !commentContent.trim()} style={{ marginTop: 8 }}>
+                {postingComment ? 'Posting…' : 'Post Comment'}
               </button>
             </form>
             

@@ -1,91 +1,45 @@
 import { configureStore, createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import api from './baseApi.js'
 
 export const fetchCategories = createAsyncThunk('categories/fetch', async () => {
-  const res = await fetch('/api/categories')
-  if (!res.ok) throw new Error('Failed to load categories')
-  return await res.json()
+  return await api.get('/categories')
 })
 
 export const createCategory = createAsyncThunk('categories/create', async (name) => {
-  const token = localStorage.getItem('token') || ''
-  const res = await fetch('/api/categories', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', authorization: `Bearer ${token}` },
-    body: JSON.stringify({ name }),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Failed to create category')
+  const data = await api.post('/categories', { name })
   return data.name
 })
 
 export const fetchArticles = createAsyncThunk('articles/fetch', async (category) => {
   const qs = category ? `?category=${encodeURIComponent(category)}` : ''
-  const res = await fetch('/api/articles' + qs)
-  if (!res.ok) throw new Error('Failed to load articles')
-  return await res.json()
+  return await api.get('/articles' + qs)
 })
 
 export const postArticle = createAsyncThunk('articles/post', async ({ title, content, category, imageUrl }) => {
-  const token = localStorage.getItem('token') || ''
-  const res = await fetch('/api/articles', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', authorization: `Bearer ${token}` },
-    body: JSON.stringify({ title, content, category, imageUrl }),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Failed to post')
-  return data
+  return await api.post('/articles', { title, content, category, imageUrl })
 })
 
 export const uploadImage = createAsyncThunk('upload/image', async (file) => {
   const formData = new FormData()
   formData.append('image', file)
-  const res = await fetch('/api/upload', {
-    method: 'POST',
-    body: formData,
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Failed to upload')
-  return data
+  return await api.post('/upload', formData)
 })
 
 export const deleteArticle = createAsyncThunk('articles/delete', async (id) => {
-  const token = localStorage.getItem('token') || ''
-  const res = await fetch(`/api/articles/${id}`, {
-    method: 'DELETE',
-    headers: { authorization: `Bearer ${token}` },
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Failed to delete')
+  await api.del(`/articles/${id}`)
   return id
 })
 
 export const fetchComments = createAsyncThunk('comments/fetch', async (articleId) => {
-  const res = await fetch(`/api/articles/${articleId}/comments`)
-  if (!res.ok) throw new Error('Failed to load comments')
-  return await res.json()
+  return await api.get(`/articles/${articleId}/comments`)
 })
 
 export const postComment = createAsyncThunk('comments/post', async ({ articleId, content, name }) => {
-  const token = localStorage.getItem('token') || ''
-  const res = await fetch(`/api/articles/${articleId}/comments`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
-    body: JSON.stringify({ content, name }),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Failed to post comment')
-  return data
+  return await api.post(`/articles/${articleId}/comments`, { content, name })
 })
 
 export const deleteComment = createAsyncThunk('comments/delete', async (id) => {
-  const token = localStorage.getItem('token') || ''
-  const res = await fetch(`/api/comments/${id}`, {
-    method: 'DELETE',
-    headers: { authorization: `Bearer ${token}` },
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Failed to delete comment')
+  await api.del(`/comments/${id}`)
   return id
 })
 
@@ -97,9 +51,11 @@ export const requireAuth = () => {
 export const fetchMe = createAsyncThunk('auth/me', async () => {
   const token = localStorage.getItem('token') || ''
   if (!token) return null
-  const res = await fetch('/api/auth/me', { headers: { authorization: `Bearer ${token}` } })
-  if (!res.ok) return null
-  return await res.json()
+  try {
+    return await api.get('/auth/me')
+  } catch {
+    return null
+  }
 })
 
 const authSlice = createSlice({

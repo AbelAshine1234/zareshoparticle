@@ -12,6 +12,7 @@
     "create:admin": "node ./scripts/createAdmin.js"
   },
   "dependencies": {
+    "@prisma/client": "^6.16.3",
     "cloudinary": "^2.7.0",
     "cors": "^2.8.5",
     "express": "^4.19.2",
@@ -19,6 +20,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "nodemon": "^3.1.0",
+    "prisma": "^6.16.3"
   }
 }

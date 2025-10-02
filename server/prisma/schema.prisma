@@ -1,0 +1,64 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  phone     String    @unique
+  name      String
+  password  String
+  role      String    @default("user")
+  sessions  Session[]
+  articles  Article[]
+  comments  Comment[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Session {
+  token     String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id    String   @id @default(uuid())
+  name  String   @unique
+  posts Article[]
+}
+
+model Article {
+  id         String    @id @default(uuid())
+  title      String
+  content    String
+  imageUrl   String    @default("")
+  createdAt  DateTime  @default(now())
+  authorId   String
+  author     User      @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  comments   Comment[]
+}
+
+model Comment {
+  id         String   @id @default(uuid())
+  articleId  String
+  article    Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  content    String
+  authorId   String?
+  author     User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorName String
+  createdAt  DateTime @default(now())
+}
