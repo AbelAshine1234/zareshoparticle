@@ -1,17 +1,18 @@
 import express from "express";
 import cors from "cors";
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
 import { v2 as cloudinary } from "cloudinary";
 import multer from "multer";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const DATA_DIR = __dirname;
-const DB_PATH = path.join(DATA_DIR, "db.json");
+// For Vercel deployment, we'll use in-memory storage
+// In production, you should use a proper database like MongoDB, PostgreSQL, or Vercel KV
+let db = {
+  articles: [],
+  users: [],
+  sessions: [],
+  categories: [],
+  comments: []
+};
 
 // Configure Cloudinary
 cloudinary.config({
@@ -24,36 +25,12 @@ cloudinary.config({
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-function ensureDatabase() {
-  if (!existsSync(DATA_DIR)) {
-    mkdirSync(DATA_DIR, { recursive: true });
-  }
-  if (!existsSync(DB_PATH)) {
-    writeFileSync(DB_PATH, JSON.stringify({ articles: [], users: [], sessions: [], categories: [] }, null, 2), "utf-8");
-  }
-}
-
 function readDatabase() {
-  ensureDatabase();
-  const raw = readFileSync(DB_PATH, "utf-8");
-  let db;
-  try {
-    db = JSON.parse(raw) || {};
-  } catch {
-    db = {};
-  }
-  if (!Array.isArray(db.articles)) db.articles = [];
-  if (!Array.isArray(db.users)) db.users = [];
-  if (!Array.isArray(db.sessions)) db.sessions = [];
-  if (!Array.isArray(db.categories)) db.categories = [];
-  if (!Array.isArray(db.comments)) db.comments = [];
-  // Persist normalized shape so subsequent reads are safe
-  writeDatabase(db);
   return db;
 }
 
-function writeDatabase(db) {
-  writeFileSync(DB_PATH, JSON.stringify(db, null, 2), "utf-8");
+function writeDatabase(newDb) {
+  db = { ...newDb };
 }
 
 const app = express();
@@ -255,9 +232,15 @@ app.post("/api/categories", (req, res) => {
   res.status(201).json({ name: value });
 });
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// Export the app for Vercel
+export default app;
+
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
 
 
