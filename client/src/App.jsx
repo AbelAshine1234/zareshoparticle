@@ -3,6 +3,7 @@ import { Routes, Route, Link, useParams, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchArticles, fetchCategories, postArticle, select, setToken, createCategory, fetchMe, requireAuth, signOut, uploadImage, deleteArticle, fetchComments, postComment, deleteComment } from './store.js'
 import './App.css'
+import api from './baseApi.js'
 
 // AdminForm removed (replaced by phone/password + bearer token flow)
 
@@ -459,17 +460,100 @@ function PostPage() {
   )
 }
 
+function AdminPage() {
+  const [createName, setCreateName] = useState('')
+  const [createPhone, setCreatePhone] = useState('')
+  const [createPassword, setCreatePassword] = useState('')
+  const [promotePhone, setPromotePhone] = useState('')
+  const [msg, setMsg] = useState('')
+  const [err, setErr] = useState('')
+  const auth = useSelector(s => s.auth)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    // Only admins may access this page
+    if (!auth.user) return
+    if ((auth.user.role || 'user') !== 'admin') navigate('/')
+  }, [auth.user, navigate])
+
+  async function createAdmin(e) {
+    e.preventDefault()
+    setErr(''); setMsg('')
+    try {
+      const data = await api.post('/admin/create', { name: createName, phone: createPhone, password: createPassword })
+      setMsg(`Created admin: ${data.name || data.phone}`)
+      setCreateName(''); setCreatePhone(''); setCreatePassword('')
+    } catch (e) {
+      setErr(e.message || 'Failed to create admin')
+    }
+  }
+
+  async function promote(e) {
+    e.preventDefault()
+    setErr(''); setMsg('')
+    try {
+      const data = await api.post('/admin/promote', { phone: promotePhone })
+      setMsg(`Promoted to admin: ${data.phone}`)
+      setPromotePhone('')
+    } catch (e) {
+      setErr(e.message || 'Failed to promote')
+    }
+  }
+
+  return (
+    <div className="card" style={{ textAlign: 'left' }}>
+      <h2>Admin Panel</h2>
+      <p className="muted" style={{ marginTop: -6 }}>Create a new admin or promote an existing user.</p>
+      {msg && <p style={{ color: 'green' }}>{msg}</p>}
+      {err && <p style={{ color: 'red' }}>{err}</p>}
+
+      <section style={{ marginTop: 12 }}>
+        <h3 style={{ marginBottom: 8 }}>Create Admin</h3>
+        <form onSubmit={createAdmin} style={{ display: 'grid', gap: 8, maxWidth: 420 }}>
+          <label>
+            <div>Name</div>
+            <input value={createName} onChange={e => setCreateName(e.target.value)} placeholder="Admin name" style={{ width: '100%', padding: 8 }} />
+          </label>
+          <label>
+            <div>Phone</div>
+            <input value={createPhone} onChange={e => setCreatePhone(e.target.value)} placeholder="e.g. 0912..." style={{ width: '100%', padding: 8 }} />
+          </label>
+          <label>
+            <div>Password</div>
+            <input type="password" value={createPassword} onChange={e => setCreatePassword(e.target.value)} placeholder="Password" style={{ width: '100%', padding: 8 }} />
+          </label>
+          <button className="btn-primary">Create Admin</button>
+        </form>
+      </section>
+
+      <section style={{ marginTop: 20 }}>
+        <h3 style={{ marginBottom: 8 }}>Promote Existing User</h3>
+        <form onSubmit={promote} style={{ display: 'grid', gap: 8, maxWidth: 420 }}>
+          <label>
+            <div>User Phone</div>
+            <input value={promotePhone} onChange={e => setPromotePhone(e.target.value)} placeholder="e.g. 0912..." style={{ width: '100%', padding: 8 }} />
+          </label>
+          <button className="btn-primary">Promote</button>
+        </form>
+      </section>
+    </div>
+  )
+}
+
 function App() {
   const dispatch = useDispatch()
   const auth = useSelector(s => s.auth)
   const [showLogin, setShowLogin] = useState(false)
   const [showSignup, setShowSignup] = useState(false)
+  const [showAdminToken, setShowAdminToken] = useState(false)
   const [authErr, setAuthErr] = useState('')
   const [loginPhone, setLoginPhone] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
   const [signupName, setSignupName] = useState('')
   const [signupPhone, setSignupPhone] = useState('')
   const [signupPassword, setSignupPassword] = useState('')
+  const [adminTokenInput, setAdminTokenInput] = useState('')
+  const [adminTokenErr, setAdminTokenErr] = useState('')
   useEffect(() => { dispatch(fetchMe()) }, [dispatch])
 
   async function doSignin() {
@@ -508,18 +592,41 @@ function App() {
     await dispatch(fetchMe())
     setShowSignup(false)
   }
+
+  async function doAdminTokenSignin() {
+    setAdminTokenErr('')
+    try {
+      const res = await fetch(`/api/auth/admin-token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: adminTokenInput })
+      })
+      const data = await res.json()
+      if (!res.ok) { setAdminTokenErr(data.error || 'Error'); return }
+      if (data.token) dispatch(setToken(data.token))
+      await dispatch(fetchMe())
+      setShowAdminToken(false)
+      setAdminTokenInput('')
+    } catch (e) {
+      setAdminTokenErr(e.message || 'Error')
+    }
+  }
+
   return (
     <div className="container">
       <header style={{ background: '#2e7d32', color: 'white', padding: '12px 16px', marginBottom: 16 }}>
         <h1 style={{ margin: 0 }}>ZareShop Articles</h1>
         <nav style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', gap: 12 }}>
-          <Link to="/" style={{ color: 'white' }}>Articles</Link>
-          {auth.user ? (
-            <Link to="/post" style={{ color: 'white' }}>Post</Link>
-          ) : (
-            <button className="btn-primary" onClick={() => { setAuthErr(''); setShowSignup(true) }}>Post</button>
-          )}
+            <Link to="/" style={{ color: 'white' }}>Articles</Link>
+            {auth.user ? (
+              <Link to="/post" style={{ color: 'white' }}>Post</Link>
+            ) : (
+              <button className="btn-primary" onClick={() => { setAuthErr(''); setShowSignup(true) }}>Post</button>
+            )}
+            {auth.user?.role === 'admin' && (
+              <Link to="/admin" style={{ color: 'white' }}>Admin</Link>
+            )}
           </div>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
             {auth.user ? (
@@ -531,16 +638,19 @@ function App() {
               <>
                 <button className="btn-primary" onClick={() => { setAuthErr(''); setShowLogin(true) }}>Login</button>
                 <button className="btn-primary" onClick={() => { setAuthErr(''); setShowSignup(true) }}>Sign up</button>
+                <button onClick={() => { setAdminTokenErr(''); setShowAdminToken(true) }} title="Sign in with admin token">Admin token</button>
               </>
             )}
           </div>
         </nav>
       </header>
+
       <Routes>
         <Route path="/" element={<PublicList />} />
         <Route path="/articles/:id" element={<ArticleView />} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/post" element={<PostPage />} />
+        <Route path="/admin" element={<AdminPage />} />
       </Routes>
 
       {/* Auth Modals */}
@@ -580,6 +690,20 @@ function App() {
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
             <button onClick={() => setShowSignup(false)}>Cancel</button>
             <button className="btn-primary" onClick={doSignup}>Create account</button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={showAdminToken} onClose={() => setShowAdminToken(false)} title="Admin Token">
+        <div style={{ display: 'grid', gap: 8 }}>
+          <label>
+            <div>Token</div>
+            <input value={adminTokenInput} onChange={e => setAdminTokenInput(e.target.value)} placeholder="Paste admin token" style={{ width: '100%', padding: 8 }} />
+          </label>
+          {adminTokenErr && <p style={{ color: 'red' }}>{adminTokenErr}</p>}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button onClick={() => setShowAdminToken(false)}>Cancel</button>
+            <button className="btn-primary" onClick={doAdminTokenSignin} disabled={!adminTokenInput.trim()}>Sign in</button>
           </div>
         </div>
       </Modal>

@@ -111,7 +111,11 @@ router.delete('/:id', async (req, res) => {
     const found = await prisma.article.findUnique({ where: { id } })
     if (!found) return res.status(404).json({ error: 'Article not found' })
 
-    await prisma.article.delete({ where: { id } })
+    // Delete comments first, then the article (transaction ensures atomicity)
+    await prisma.$transaction([
+      prisma.comment.deleteMany({ where: { articleId: id } }),
+      prisma.article.delete({ where: { id } })
+    ])
     res.json({ message: 'Article deleted successfully' })
   } catch (e) {
     res.status(500).json({ error: 'Internal error' })
