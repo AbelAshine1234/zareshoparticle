@@ -1,5 +1,7 @@
 import prisma from '../prisma/client.js'
 
+
+//phone arg
 const phoneArg = process.argv[2]
 if (!phoneArg) {
   console.error('Usage: node scripts/makeAdmin.js <phone>')
