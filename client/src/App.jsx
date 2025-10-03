@@ -33,6 +33,8 @@ function PublicList() {
   useEffect(() => { dispatch(fetchArticles(selected)) }, [dispatch, selected])
 
   // Group by category for display
+  
+
   const grouped = items.reduce((acc, a) => {
     const key = a.category || 'Uncategorized'
     acc[key] = acc[key] || []
@@ -302,7 +304,19 @@ function SignInPage() {
     })
     const data = await res.json()
     if (!res.ok) { setError(data.error || 'Error'); return }
-    if (data.token) dispatch(setToken(data.token))
+    if (path === 'signup') {
+      // Immediately sign in to obtain token, then continue
+      const res2 = await fetch(`/api/auth/signin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, password }),
+      })
+      const data2 = await res2.json()
+      if (!res2.ok) { setError(data2.error || 'Error'); return }
+      if (data2.token) dispatch(setToken(data2.token))
+    } else if (data.token) {
+      dispatch(setToken(data.token))
+    }
     await dispatch(fetchMe())
     navigate('/post')
   }
@@ -543,6 +557,7 @@ function AdminPage() {
 function App() {
   const dispatch = useDispatch()
   const auth = useSelector(s => s.auth)
+  const navigate = useNavigate()
   const [showLogin, setShowLogin] = useState(false)
   const [showSignup, setShowSignup] = useState(false)
   const [showAdminToken, setShowAdminToken] = useState(false)
@@ -568,6 +583,7 @@ function App() {
     if (data.token) dispatch(setToken(data.token))
     await dispatch(fetchMe())
     setShowLogin(false)
+    navigate('/post')
   }
 
   async function doSignup() {
@@ -591,6 +607,7 @@ function App() {
     if (data2.token) dispatch(setToken(data2.token))
     await dispatch(fetchMe())
     setShowSignup(false)
+    navigate('/post')
   }
 
   async function doAdminTokenSignin() {

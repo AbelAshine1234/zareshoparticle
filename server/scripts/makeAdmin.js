@@ -1,10 +1,4 @@
-import { readFileSync, writeFileSync } from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-const DB_PATH = path.join(__dirname, '..', 'db.json')
+import prisma from '../prisma/client.js'
 
 const phoneArg = process.argv[2]
 if (!phoneArg) {
@@ -12,14 +6,24 @@ if (!phoneArg) {
   process.exit(1)
 }
 
-const db = JSON.parse(readFileSync(DB_PATH, 'utf-8'))
-const user = (db.users || []).find(u => String(u.phone) === String(phoneArg))
-if (!user) {
-  console.error('User not found for phone:', phoneArg)
+try {
+  const user = await prisma.user.findUnique({ where: { phone: String(phoneArg) } })
+  if (!user) {
+    console.error('User not found for phone:', phoneArg)
+    process.exit(1)
+  }
+
+  if ((user.role || 'user') === 'admin') {
+    console.log('User is already admin:', { id: user.id, phone: user.phone })
+    process.exit(0)
+  }
+
+  const updated = await prisma.user.update({ where: { id: user.id }, data: { role: 'admin' }, select: { id: true, phone: true, role: true } })
+  console.log('Promoted to admin:', updated)
+  process.exit(0)
+} catch (e) {
+  console.error('Failed to promote user to admin:', e?.message || e)
   process.exit(1)
 }
-user.role = 'admin'
-writeFileSync(DB_PATH, JSON.stringify(db, null, 2), 'utf-8')
-console.log('Promoted to admin:', { id: user.id, phone: user.phone })
 
 
